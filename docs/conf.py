@@ -6,6 +6,7 @@ sys.path.append(str(pathlib.Path(__file__).parent))
 extensions = [
     "sphinx.ext.autodoc",
     "sphinx_rtd_theme",
+    "sphinx_toolbox.more_autodoc.autoprotocol",
 ]
 
 html_theme = "sphinx_rtd_theme"
