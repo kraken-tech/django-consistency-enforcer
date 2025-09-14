@@ -68,3 +68,20 @@ Django patterns
 .. autofunction:: django_consistency_enforcer.urls.all_django_patterns
 
 .. autofunction:: django_consistency_enforcer.urls.ensure_raw_pattern_is_generic_view
+
+Errors
+------
+
+This library also provides a container class for holding onto many errors.
+
+.. autoclass:: django_consistency_enforcer.errors.InvalidPattern
+   :members:
+   :undoc-members:
+
+.. autoclass:: django_consistency_enforcer.errors.FoundInvalidPatterns
+   :members:
+   :undoc-members:
+
+.. autoclass:: django_consistency_enforcer.errors.ErrorContainer
+   :members:
+   :undoc-members:
