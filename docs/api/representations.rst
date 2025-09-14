@@ -24,44 +24,44 @@ and objects representing the patterns.
 Django views
 ------------
 
-.. autoclass:: django_consistency_enforcer.urls.FunctionArg()
+.. autoclass:: django_consistency_enforcer.urls.FunctionArg
     :members:
     :undoc-members:
 
-.. autoclass:: django_consistency_enforcer.urls.Function()
+.. autoclass:: django_consistency_enforcer.urls.Function
     :members:
     :undoc-members:
 
-.. autoclass:: django_consistency_enforcer.urls.DispatchFunction()
+.. autoclass:: django_consistency_enforcer.urls.DispatchFunction
     :members:
     :undoc-members:
 
-.. autoclass:: django_consistency_enforcer.urls.Where()
+.. autoclass:: django_consistency_enforcer.urls.Where
     :members:
     :undoc-members:
 
 Django patterns
 ---------------
 
-.. autoclass:: django_consistency_enforcer.urls.CapturedArg()
+.. autoclass:: django_consistency_enforcer.urls.CapturedArg
     :members:
     :undoc-members:
 
-.. autoprotocol:: django_consistency_enforcer.urls.CapturedArgMaker()
+.. autoprotocol:: django_consistency_enforcer.urls.CapturedArgMaker
 
-.. autoclass:: django_consistency_enforcer.urls.RawPatternPart()
+.. autoclass:: django_consistency_enforcer.urls.RawPatternPart
     :members:
     :undoc-members:
 
-.. autoclass:: django_consistency_enforcer.urls.RawPattern()
+.. autoclass:: django_consistency_enforcer.urls.RawPattern
     :members:
     :undoc-members:
 
-.. autoclass:: django_consistency_enforcer.urls.Pattern()
+.. autoclass:: django_consistency_enforcer.urls.Pattern
     :members:
     :undoc-members:
 
-.. autoclass:: django_consistency_enforcer.urls.ViewPattern()
+.. autoclass:: django_consistency_enforcer.urls.ViewPattern
     :members:
     :undoc-members:
 

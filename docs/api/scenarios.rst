@@ -22,26 +22,26 @@ pattern and must subclass one of these two base classes:
 Built in scenarios
 ------------------
 
-.. autoclass:: django_consistency_enforcer.urls.CheckAcceptsArgsFunctionScenario()
+.. autoclass:: django_consistency_enforcer.urls.CheckAcceptsArgsFunctionScenario
     :members:
     :undoc-members:
 
-.. autoclass:: django_consistency_enforcer.urls.CheckHasCorrectAnnotationsFunctionScenario()
+.. autoclass:: django_consistency_enforcer.urls.CheckHasCorrectAnnotationsFunctionScenario
     :members:
     :undoc-members:
 
-.. autoclass:: django_consistency_enforcer.urls.CheckKwargsMustBeAnnotatedFunctionScenario()
+.. autoclass:: django_consistency_enforcer.urls.CheckKwargsMustBeAnnotatedFunctionScenario
     :members:
     :undoc-members:
 
-.. autoclass:: django_consistency_enforcer.urls.CheckPositionalArgsAreCorrectFunctionScenario()
+.. autoclass:: django_consistency_enforcer.urls.CheckPositionalArgsAreCorrectFunctionScenario
     :members:
     :undoc-members:
 
-.. autoclass:: django_consistency_enforcer.urls.CheckRequiredArgsMatchUrlPatternFunctionScenario()
+.. autoclass:: django_consistency_enforcer.urls.CheckRequiredArgsMatchUrlPatternFunctionScenario
     :members:
     :undoc-members:
 
-.. autoclass:: django_consistency_enforcer.urls.CheckViewClassRequestAnnotationScenario()
+.. autoclass:: django_consistency_enforcer.urls.CheckViewClassRequestAnnotationScenario
     :members:
     :undoc-members:

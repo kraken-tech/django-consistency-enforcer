@@ -5,11 +5,12 @@ sys.path.append(str(pathlib.Path(__file__).parent))
 
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx_rtd_theme",
     "sphinx_toolbox.more_autodoc.autoprotocol",
+    "sphinx_toolbox.more_autodoc.typevars",
+    "sphinx_immaterial",
 ]
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "sphinx_immaterial"
 html_static_path = ["_static"]
 html_css_files = ["css/extra.css"]
 

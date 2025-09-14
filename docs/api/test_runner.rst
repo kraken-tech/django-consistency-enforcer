@@ -114,7 +114,7 @@ Once we have our test runner, we may then run all of our
 The test runner
 ---------------
 
-.. autoclass:: django_consistency_enforcer.urls.TestRunner()
+.. autoclass:: django_consistency_enforcer.urls.TestRunner
     :members:
     :undoc-members:
 

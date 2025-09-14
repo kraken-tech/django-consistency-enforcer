@@ -12,7 +12,7 @@ dependencies = [
 [project.optional-dependencies]
 docs = [
     "sphinx-autobuild==2025.8.25",
-    "sphinx-rtd-theme==3.0.2",
+    "sphinx-immaterial==0.13.6",
     "sphinx==8.2.3",
     "sphinx-toolbox==4.0.0",
 ]
