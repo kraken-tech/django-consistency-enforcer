@@ -14,6 +14,11 @@ html_theme = "sphinx_immaterial"
 html_static_path = ["_static"]
 html_css_files = ["css/extra.css"]
 
+html_theme_options = {
+    "repo_url": "https://github.com/kraken-tech/django-consistency-enforcer",
+    "features": ["toc.integrate", "navigation.tabs", "navigation.tabs.sticky"],
+}
+
 exclude_patterns = ["_build/**", ".sphinx-build/**", "README.rst"]
 
 master_doc = "index"

@@ -1,3 +1,5 @@
+:tocdepth: 3
+
 .. _test_runner:
 
 The test runner Mechanism

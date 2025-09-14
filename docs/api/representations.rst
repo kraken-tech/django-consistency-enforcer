@@ -1,3 +1,5 @@
+:tocdepth: 3
+
 .. _representations:
 
 Representing views and patterns
