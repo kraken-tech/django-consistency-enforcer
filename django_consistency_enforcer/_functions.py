@@ -12,16 +12,41 @@ from typing_extensions import get_annotations
 
 @attrs.frozen
 class FunctionArg:
+    """
+    Holds onto the information for a single argument on a django view function/method.
+    """
+
     name: str
+    """The name of the argument"""
+
     required: bool
+    """Whether python will fail if this argument is not passed into the function"""
+
     keyword_only: bool
+    """Whether this argument can only be passed in as a keyword"""
+
     annotation: object
+    """The annotation associated with this argument"""
 
     is_self: bool = False
+    """Whether this argument represents the instance passed into a method (idiomatically, the self argument)"""
+
     is_variable_keywords: bool = False
+    """Whether this argument is a `**kwargs`"""
+
     is_variable_positional: bool = False
+    """Whether this argument is a `*args`"""
 
     def matches(self, annotation: object) -> bool:
+        """
+        Returns whether the annotation on the argument matches some specific annotation.
+
+        Takes into account:
+
+        * Matches if this argument is typed as `Any`
+        * Matches if this argument is `**kwargs: object`
+        * Union types on both this arg and the provided annotation
+        """
         if self.annotation == Any or (self.is_variable_keywords and self.annotation == object):
             return True
 
@@ -42,14 +67,31 @@ class FunctionArg:
 
 @attrs.frozen
 class Function:
+    """
+    Holds onto the information to a specific django function/method.
+    """
+
     name: str
+    """The name of the function"""
+
     module: str
+    """The import path to the module the function is defined in"""
 
     function_args: Sequence[FunctionArg]
+    """The arguments to this function"""
+
     allows_arbitrary: bool
+    """Whether there is a `**kwargs: object` or `**kwargs: Any`"""
 
     view_class: type | None = None
+    """The class this function is defined on if it's a method"""
+
     defined_on: type | None = None
+    """
+    The specific class this function comes from
+
+    (may be different to view_class if defined on a parent)
+    """
 
     @classmethod
     def from_callback(
@@ -57,6 +99,16 @@ class Function:
         callback: Callable[..., object],
         view_class: type | None = None,
     ) -> Self:
+        """
+        Return an instance of this class provided some function and the view class
+        it was found on if it's a method.
+
+        Will attempt to resolve any stringified annotations and do things like
+        work out which class in the MRO the function is defined on if it's a method.
+
+        Will also find any `**kwargs: Unpack[...]` and treat those as if they
+        were defined as individual keyword arguments.
+        """
         callback_module = inspect.getmodule(callback)
 
         globalns: dict[str, object] | None = None
@@ -172,6 +224,12 @@ class Function:
         )
 
     def display(self, *, indent: str = "  ") -> str:
+        """
+        Return a string representation of the information held by this object.
+
+        Will be a multi line string of one line per specific information,
+        with the specified indent. Does not include function args.
+        """
         parts: list[str] = []
         parts.append(f"module = {self.module}")
 
@@ -185,37 +243,52 @@ class Function:
 
 @attrs.frozen
 class DispatchFunction:
+    """
+    This represents a :class:`Function` that is used as by django for dispatching
+    a request. Essentially it proxies a :class:`Function` and also includes
+    an understanding of any required positional arguments.
+    """
+
     _function: Function
+
     positional: Sequence[tuple[str, object]]
+    """Any required arguments as a tuple of `(name, annotation)` that is expected of this function"""
 
     @property
     def name(self) -> str:
+        """Proxy `name` from the function"""
         return self._function.name
 
     @property
     def module(self) -> str:
+        """Proxy `module` from the function"""
         return self._function.module
 
     @property
     def function_args(self) -> Sequence[FunctionArg]:
+        """Proxy `function_args` from the function"""
         return self._function.function_args
 
     @property
     def allows_arbitrary(self) -> bool:
+        """Proxy `allows_arbitrary` from the function"""
         return self._function.allows_arbitrary
 
     @property
     def view_class(self) -> type | None:
+        """Proxy `view_class` from the function"""
         return self._function.view_class
 
     @property
     def defined_on(self) -> type | None:
+        """Proxy `defined_on` from the function"""
         return self._function.defined_on
 
     class _DisplayArgs(TypedDict):
         indent: NotRequired[str]
 
     def display(self, **kwargs: Unpack[_DisplayArgs]) -> str:
+        """Proxy `display` from the function"""
         return self._function.display(**kwargs)
 
     @classmethod
@@ -226,5 +299,9 @@ class DispatchFunction:
         *,
         positional: Sequence[tuple[str, object]],
     ) -> Self:
+        """
+        Create an instance given some callback, the view it is found on if it's
+        a method, and the positional arguments that are considered required.
+        """
         function = Function.from_callback(callback, view_class=view_class)
         return cls(function=function, positional=positional)

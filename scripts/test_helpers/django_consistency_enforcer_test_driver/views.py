@@ -1,3 +1,7 @@
+"""
+A number of arbitrary django views that can be used by tests to assert specific analysis
+"""
+
 from typing import NotRequired, TypedDict, Unpack
 
 from django import http

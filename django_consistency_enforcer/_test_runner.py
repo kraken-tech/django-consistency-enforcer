@@ -9,17 +9,31 @@ from . import _errors, _raw_patterns, _scenarios, _view_patterns
 
 
 class PatternMaker(Protocol[_view_patterns.T_CO_Pattern]):
+    """
+    Represents a constructor that returns an instance of a Pattern subclass.
+    """
+
     def __call__(
         self, *, raw_pattern: _raw_patterns.RawPattern
     ) -> _view_patterns.T_CO_Pattern: ...
 
 
 class RawPatternExcluder(Protocol):
+    """
+    Represents a callable that is used to determine if a pattern should be excluded
+    from analysis.
+    """
+
     def __call__(self, *, raw_pattern: _raw_patterns.RawPattern) -> bool: ...
 
 
 @attrs.frozen
 class TestRunner(Generic[_view_patterns.T_Pattern]):  # noqa: UP046
+    """
+    This object is used to orchestrate the whole test, performing discovery and
+    running the scenarios.
+    """
+
     _patterns: Sequence[_view_patterns.T_Pattern]
 
     @classmethod
@@ -30,6 +44,11 @@ class TestRunner(Generic[_view_patterns.T_Pattern]):  # noqa: UP046
         raw_pattern_excluder: RawPatternExcluder | None = None,
         pattern_maker: PatternMaker[_view_patterns.T_Pattern],
     ) -> Self:
+        """
+        Create an instance given all the raw patterns that are relevant, the ability
+        to exclude patterns, and the ability to create fully realised pattern
+        objects from the non excluded raw patterns.
+        """
         errors = _errors.ErrorContainer()
         patterns: list[_view_patterns.T_Pattern] = []
 
@@ -56,6 +75,21 @@ class TestRunner(Generic[_view_patterns.T_Pattern]):  # noqa: UP046
         pattern_scenarios: Sequence[_scenarios.PatternScenario[_view_patterns.T_Pattern]],
         function_scenarios: Sequence[_scenarios.FunctionScenario[_view_patterns.T_Pattern]],
     ) -> None:
+        """
+        Run pattern and function scenarios against the patterns we know about,
+        providing also the type used by Django to for authenticated of users.
+
+        Will collect errors from scenarios and raise them as a group if:
+
+        - Any scenario has `exit_early=True` and fails.
+        - Any errors are found after all the pattern scenarios are run which
+          happens before any function scenarios are run.
+        - Any errors are found after all the functional scenarios are run.
+
+        Note that the test runner will use `pattern.exclude` to skip any patterns
+        that do not want to be analysed, and `pattern.exclude_function` to
+        skip any functions that should not be analysed.
+        """
         errors = _errors.ErrorContainer()
 
         for pattern_scenario in pattern_scenarios:

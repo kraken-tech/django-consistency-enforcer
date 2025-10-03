@@ -24,10 +24,22 @@ class CapturedArg:
     """
 
     annotation: object
+    """The annotation associated with the captured arg"""
+
     converter: type | None = None
+    """The converter used to transform the string received from the url"""
 
     @classmethod
     def from_converter(cls, converter: type | None) -> Self:
+        """
+        Return an instance given some converter type.
+
+        This knows about the built in converter types. And how to get the
+        return annotation from the `to_python` method for other converters.
+
+        Where it's used it's possible to instead pass in a subclass that knows
+        about more converters.
+        """
         if converter is None:
             return cls(converter=None, annotation=str)
 
@@ -50,15 +62,30 @@ class CapturedArg:
 
 
 class CapturedArgMaker(Protocol):
+    """
+    Represents a constructor that returns a :class:`CapturedArg` object.
+    """
+
     def __call__(self, converter: type | None, /) -> CapturedArg: ...
 
 
 @attrs.frozen
 class RawPatternPart:
+    """
+    Represents a single part of a Django url pattern.
+    """
+
     groups: int
+    """The number of captured groups represented by this part of the pattern"""
+
     captured: dict[str, CapturedArg]
+    """A dictionary of captured args from this pattern"""
+
     where: _display.Where
+    """Holds onto information about where this pattern is defined"""
+
     default_arg_names: set[str] = attrs.field(factory=set)
+    """Holds onto the names of any arguments that are provided to the view regardless of the url"""
 
     @classmethod
     def from_pattern(
@@ -69,6 +96,9 @@ class RawPatternPart:
         *,
         captured_arg_maker: CapturedArgMaker,
     ) -> Self:
+        """
+        Return an instance given some Django RoutePattern/RegexPattern.
+        """
         captured: dict[str, CapturedArg] = {}
 
         regex = pattern.regex
@@ -86,10 +116,25 @@ class RawPatternPart:
 
 @attrs.frozen
 class RawPattern:
+    """
+    Represents the parts that make up a single pattern that routes a request
+    to a specific view.
+
+    The naming "Raw" is because this object makes no judgement over the specific
+    type of the view class when this is a class based view.
+    """
+
     parts: Sequence[RawPatternPart]
+    """The different parts that leads to the whole pattern"""
+
     callback: Callable[..., object]
+    """The function that is called by Django if this route is matched"""
+
     view_class: type | None
+    """The view class associated with the callback when it's marked as having a view class"""
+
     where: _display.Where
+    """Information about where the final part of the pattern is defined"""
 
     @classmethod
     def from_parts(
@@ -99,6 +144,10 @@ class RawPattern:
         callback: Callable[..., object],
         where: _display.Where,
     ) -> Self:
+        """
+        Create an instance given the parts that make up the pattern and the callback
+        it calls into when the route is matched.
+        """
         view_class = getattr(callback, "view_class", None)
         if view_class is None:
             return cls(parts=parts, callback=callback, view_class=None, where=where)

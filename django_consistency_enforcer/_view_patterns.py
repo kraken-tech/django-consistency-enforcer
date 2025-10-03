@@ -58,45 +58,86 @@ def ensure_raw_pattern_is_generic_view(
 
 
 class Pattern(abc.ABC):
-    @property
-    @abc.abstractmethod
-    def parts(self) -> Sequence[_raw_patterns.RawPatternPart]: ...
+    """
+    All our scenarios are in terms of this interface.
+    """
 
     @property
     @abc.abstractmethod
-    def callback(self) -> Callable[..., object]: ...
+    def parts(self) -> Sequence[_raw_patterns.RawPatternPart]:
+        """
+        The parts that make up the whole pattern.
+        """
 
     @property
     @abc.abstractmethod
-    def where(self) -> _display.Where: ...
+    def callback(self) -> Callable[..., object]:
+        """
+        The function Django calls when this pattern is matched.
+        """
+
+    @property
+    @abc.abstractmethod
+    def where(self) -> _display.Where:
+        """
+        Information about where the final part of the pattern is defined.
+        """
 
     @abc.abstractmethod
-    def exclude(self, *, auth_user_model: type) -> bool: ...
+    def exclude(self, *, auth_user_model: type) -> bool:
+        """
+        Used by the test runner to skip analysis of this pattern.
+        """
 
     @abc.abstractmethod
     def exclude_function(
         self, *, auth_user_model: type, function: _functions.DispatchFunction
-    ) -> bool: ...
+    ) -> bool:
+        """
+        Used by the test runner to skip analysis of this function.
+        """
 
     @abc.abstractmethod
-    def relevant_functions(self) -> Iterator[_functions.DispatchFunction]: ...
+    def relevant_functions(self) -> Iterator[_functions.DispatchFunction]:
+        """
+        Return an iterator of the functions to run function scenarios over.
+        """
 
 
 @attrs.frozen
 class ViewPattern(Generic[T_ViewClass], Pattern):  # noqa: UP046
+    """
+    A concrete implementation of the :protocol:`Pattern` interface that is
+    specific to subclasses of `django.views.generic.View`
+    """
+
     raw_pattern: _raw_patterns.RawPattern
+    """The full raw pattern this represents"""
 
     parts: Sequence[_raw_patterns.RawPatternPart]
+    """The parts that make up the full pattern"""
+
     callback: Callable[..., object]
+    """The function Django calls if this pattern is matched"""
+
     view_class: type[T_ViewClass] | None
+    """The subclass of django.views.generic.View if this is a method"""
+
     where: _display.Where
+    """Information of where the final part of this pattern was defined"""
 
     def exclude(self, *, auth_user_model: type) -> bool:
+        """
+        By default no pattern is excluded.
+        """
         return False
 
     def exclude_function(
         self, *, auth_user_model: type, function: _functions.DispatchFunction
     ) -> bool:
+        """
+        By default only functions defined by Django itself is excluded from analysis.
+        """
         if function.defined_on and function.defined_on.__module__.startswith("django."):
             # Ignore code that comes from django itself
             # Nothing to be gained from complaining about code that is out of the user's control
@@ -105,16 +146,38 @@ class ViewPattern(Generic[T_ViewClass], Pattern):  # noqa: UP046
         return False
 
     def dispatch_function_request_type(self) -> object:
+        """
+        Return the annotation that should be given to `request` positional arguments
+        to dispatch functions.
+        """
         return http.HttpRequest
 
     def make_dispatch_function(
         self, callback: Callable[..., object], *, positional: Sequence[tuple[str, object]]
     ) -> _functions.DispatchFunction:
+        """
+        Used to return a subclass of :class:`django_consistency_enforce.urls.DispatchFunction`.
+
+        Useful if subclasses want to add different implementation details to
+        these objects.
+        """
         return _functions.DispatchFunction.from_callback(
             callback, view_class=self.view_class, positional=positional
         )
 
     def relevant_functions(self) -> Iterator[_functions.DispatchFunction]:
+        """
+        Yield the dispatch functions that should be passed into function scenarios.
+
+        By default, if the callback is not a method, that's returned and nothing
+        else.
+
+        Otherwise we yield methods found on the view class:
+        - `setup`
+        - `dispatch`
+        - `make_dispatch_function` if we are a subclass of `generic.RedirectView`
+        - Those yield by `relevant_dispatch_functions`
+        """
         view_class = self.view_class
         if view_class is None:
             yield self.make_dispatch_function(
@@ -144,6 +207,14 @@ class ViewPattern(Generic[T_ViewClass], Pattern):  # noqa: UP046
     def relevant_dispatch_functions(
         self, *, view_class: type[T_ViewClass], request_type: object
     ) -> Iterator[_functions.DispatchFunction]:
+        """
+        Yield the extra functions that represent specific http method types.
+
+        So `get`, `post`, `delete`, etc, as defined by `http_method_names` on
+        the view class.
+
+        As well as `http_method_not_allowed` method.
+        """
         yield self.make_dispatch_function(
             view_class.http_method_not_allowed,
             positional=(("request", request_type),),
@@ -159,6 +230,10 @@ class ViewPattern(Generic[T_ViewClass], Pattern):  # noqa: UP046
                 )
 
     def display_view_class(self, *, indent: str = "  ") -> str:
+        """
+        Return an empty string if we aren't a method, otherwise return a string
+        representing information about the view class.
+        """
         if self.view_class is None:
             return ""
 

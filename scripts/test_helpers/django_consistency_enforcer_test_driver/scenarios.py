@@ -12,6 +12,11 @@ from django_consistency_enforcer import urls as enforcer
 class AlwaysMistypedCheckPositionalArgsAreCorrectFunctionScenario(
     enforcer.CheckPositionalArgsAreCorrectFunctionScenario
 ):
+    """
+    A concrete implementation of CheckPositionalArgsAreCorrectFunctionScenario
+    that can be used in tests where `is_mistyped` always says the type is wrong.
+    """
+
     disallow_var_args: bool = False
     enforce_keyword_args: bool = False
 
@@ -32,6 +37,10 @@ class AlwaysMistypedCheckPositionalArgsAreCorrectFunctionScenario(
 
 @attrs.frozen
 class StubPattern(enforcer.Pattern):
+    """
+    A minimal concrete implementation of pattern that can be used by tests
+    """
+
     name: str
     parts: Sequence[enforcer.RawPatternPart] = attrs.field(factory=tuple)
     callback: Callable[..., object] = attrs.field(default=lambda request: http.HttpResponse("hi"))
@@ -53,6 +62,10 @@ class StubPattern(enforcer.Pattern):
 
 @attrs.frozen
 class StubPatternScenario(enforcer.PatternScenario[StubPattern]):
+    """
+    A minimal concrete implementation of PatternScenario that can be used by tests
+    """
+
     name: str
 
     _on_run: Callable[[tuple[Self, StubPattern]], None]
@@ -76,6 +89,10 @@ class StubPatternScenario(enforcer.PatternScenario[StubPattern]):
 
 @attrs.frozen
 class StubFunctionScenario(enforcer.FunctionScenario[StubPattern]):
+    """
+    A minimal concrete implementation of FunctionScenario that can be used by tests
+    """
+
     name: str
 
     _on_run: Callable[[tuple[Self, StubPattern, enforcer.DispatchFunction]], None]

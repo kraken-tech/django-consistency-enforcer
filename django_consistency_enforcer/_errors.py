@@ -20,10 +20,18 @@ class InvalidPattern(Exception):
 
 @attrs.frozen
 class ErrorContainer:
+    """
+    This holds onto zero or more :class:`InvalidPattern` errors with a
+    read only interface for accessing them.
+    """
+
     _by_error_str: dict[str, int] = attrs.field(init=False, factory=dict)
     _error_by_str: dict[str, InvalidPattern] = attrs.field(init=False, factory=dict)
 
     def add(self, error: InvalidPattern) -> None:
+        """
+        Add an error to the container.
+        """
         error_str = str(error)
         if error_str not in self._error_by_str:
             self._error_by_str[error_str] = error
@@ -34,14 +42,28 @@ class ErrorContainer:
         self._by_error_str[error_str] += 1
 
     def __iter__(self) -> Iterator[InvalidPattern]:
+        """
+        A read only iterator of the errors currently held by the container
+
+        Will de-duplicate errors by their stringified representation.
+        """
         yield from (self._error_by_str[error_str] for error_str in self._by_error_str)
 
     @property
     def errors(self) -> Iterator[InvalidPattern]:
+        """
+        This returns the error container as an iterator and is effectively an
+        alias to it's `__iter__` method.
+        """
         yield from self
 
     @property
     def by_most_repeated(self) -> Iterator[str]:
+        """
+        Return an iterator of the stringified representation of the errors held
+        by the container ordered such that the most repeated errors comes before
+        less repeated errors.
+        """
         yield from (
             error
             for error, _ in (
@@ -55,6 +77,10 @@ class ErrorContainer:
 
 @attrs.frozen
 class FoundInvalidPatterns(Exception):
+    """
+    Used to indicate that invalid patterns were found.
+    """
+
     errors: ErrorContainer
 
     def __str__(self) -> str:
@@ -63,6 +89,11 @@ class FoundInvalidPatterns(Exception):
 
 @attrs.frozen(kw_only=True)
 class NoPositionalArguments(InvalidPattern):
+    """
+    Used to indicate that patterns were found holding onto a regex group with
+    no name.
+    """
+
     pattern: _raw_patterns.RawPattern
     where: _display.Where
 
@@ -72,6 +103,11 @@ class NoPositionalArguments(InvalidPattern):
 
 @attrs.frozen(kw_only=True)
 class MustSubclassDjangoGenericView(InvalidPattern):
+    """
+    Used to indicate that a view was found that does not have `django.views.generic.View`
+    in it's MRO.
+    """
+
     pattern: _raw_patterns.RawPattern
     where: _display.Where
 
@@ -81,6 +117,11 @@ class MustSubclassDjangoGenericView(InvalidPattern):
 
 @attrs.frozen(kw_only=True)
 class RequiredArgOnViewNotAlwaysRequiredByPattern(InvalidPattern):
+    """
+    Used to indicate that there are arguments expected by a view that do not
+    appear in any url pattern that uses that view.
+    """
+
     pattern_wheres: Sequence[_display.Where]
     function_where: _Display
     missing_args: set[str]
@@ -106,6 +147,11 @@ class RequiredArgOnViewNotAlwaysRequiredByPattern(InvalidPattern):
 
 @attrs.frozen(kw_only=True)
 class ViewDoesNotAcceptCapturedArg(InvalidPattern):
+    """
+    Used to indicate that a url pattern referencing this view is providing an
+    argument that view does not accept.
+    """
+
     where: _display.Where
     missing: Sequence[tuple[_display.Where, str]]
     function_where: _Display
@@ -129,6 +175,13 @@ class ViewDoesNotAcceptCapturedArg(InvalidPattern):
 
 @attrs.frozen(kw_only=True)
 class InvalidRequestAnnotation(InvalidPattern, abc.ABC):
+    """
+    Used to indicate that a view has an annotation for `request` that is incorrect.
+
+    This exception must be subclass'd with an implementation for the `expect`
+    and `expanded_note` properties.
+    """
+
     where: _display.Where
     view_class: type
     request_annotation: object
@@ -166,7 +219,14 @@ class InvalidRequestAnnotation(InvalidPattern, abc.ABC):
 
     @property
     @abc.abstractmethod
-    def expanded_note(self) -> Iterator[str]: ...
+    def expanded_note(self) -> Iterator[str]:
+        """
+        Return extra information to attach to the stringified form of this
+        exception.
+
+        This is where to place specific advice about what should be used to
+        create a valid annotation for the request attribute on the view.
+        """
 
     def __str__(self) -> str:
         return "\n".join(
@@ -183,17 +243,40 @@ class InvalidRequestAnnotation(InvalidPattern, abc.ABC):
 
 @attrs.frozen
 class MismatchedRequiredArgs(InvalidPattern):
+    """
+    Used to indicate that an argument in a view does not match what is expected
+    for that argument when taking into account both desired patterns and the url
+    patterns that reference the view.
+    """
+
     @attrs.frozen
     class Incorrect:
+        """
+        A representation of what about the annotation is incorrect.
+
+        The idea is to use the classmethods on this to create an instance for
+        the specific ways an annotation can be wrong.
+        """
+
         reason: str
         add_auth_message: bool = False
 
         @classmethod
         def missing(cls, name: str) -> Self:
+            """
+            Create an instance explaining that a required positional argument
+            is missing.
+
+            For example most methods require a `request` positional argument.
+            """
             return cls(reason=f"Missing required positional argument: {name}")
 
         @classmethod
         def misnamed(cls, *, index: int, got: str, want: str) -> Self:
+            """
+            Create an instance explaining that a positional argument is expected
+            to have some specific different name.
+            """
             if index == 0:
                 reason = f"The first argument should be named {want}, but got {got}"
             elif index == 1:
@@ -206,6 +289,9 @@ class MismatchedRequiredArgs(InvalidPattern):
         def mistyped(
             cls, *, name: str, got: object, want: str, add_auth_message: bool = False
         ) -> Self:
+            """
+            Create an instance explaining that the annotation on argument is wrong.
+            """
             return cls(
                 reason=f"The '{name}' argument needs to be '{want}' but it's '{got}'",
                 add_auth_message=add_auth_message,
@@ -213,12 +299,19 @@ class MismatchedRequiredArgs(InvalidPattern):
 
         @classmethod
         def no_var_args(cls, *, name: str) -> Self:
+            """
+            Create an instance explaining that `*args` should not be used.
+            """
             return cls(
                 reason=f"Please remove the var args '*{name}' from the function signature and ensure all arguments are explicit"
             )
 
         @classmethod
         def make_keyword_only(cls, *, name: str) -> Self:
+            """
+            Create an instance explaining that `*` should be used after the
+            required positional arguments.
+            """
             return cls(
                 reason=f"Please ensure the '{name}' argument comes after a lone '*' so that it is defined as keyword only"
             )
@@ -242,6 +335,10 @@ class MismatchedRequiredArgs(InvalidPattern):
 
 @attrs.frozen
 class InvalidArgAnnotations(InvalidPattern):
+    """
+    Used to indicate that the annotation on argument in the view is incorrect.
+    """
+
     function_where: _Display
     where: _display.Where
     incorrect: list[tuple[str, object, object]]
@@ -268,6 +365,10 @@ class InvalidArgAnnotations(InvalidPattern):
 
 @attrs.frozen
 class KwargsMustBeAnnotated(InvalidPattern):
+    """
+    Used to indicate that the annotation on a `**kwargs` is incorrect.
+    """
+
     function: _functions.DispatchFunction
     arg_name: str
     allows_object: bool
