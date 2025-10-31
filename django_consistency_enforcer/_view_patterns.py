@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import abc
 import inspect
+import pathlib
 from collections.abc import Callable, Iterator, Sequence
 from typing import Generic
 
 import attrs
+import django
 from django import http
 from django.views import generic
 from typing_extensions import TypeVar
@@ -139,6 +141,12 @@ class ViewPattern(Generic[T_ViewClass], Pattern):  # noqa: UP046
         By default only functions defined by Django itself is excluded from analysis.
         """
         if function.defined_on and function.defined_on.__module__.startswith("django."):
+            # Ignore code that comes from django itself
+            # Nothing to be gained from complaining about code that is out of the user's control
+            return True
+        elif function.view_class is None and function.module.startswith(
+            str(pathlib.Path(django.__file__).parent)
+        ):
             # Ignore code that comes from django itself
             # Nothing to be gained from complaining about code that is out of the user's control
             return True

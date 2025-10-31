@@ -20,4 +20,12 @@ from django.urls import path
 
 from . import views
 
-urlpatterns = [path("admin/", admin.site.urls), path("", views.index)]
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path("", views.index),
+    path("/with-extra-args", views.with_extra_args),
+    path("/missing-specific-args/<str:missing>/<int:in_url>", views.missing_specific_args),
+    path("/wrong-type/<int:should_be_int>", views.wrong_type),
+    path("/incorrect-view/<int:should_be_int>", views.IncorrectView.as_view()),
+    path("/correct-view/<str:should_be_str>", views.CorrectView.as_view()),
+]
