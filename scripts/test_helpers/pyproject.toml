@@ -1,0 +1,24 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "django-consistency-enforcer-test-driver"
+dynamic = ["version"]
+authors = [
+    { name = "Stephen Moore", email = "stephen@delfick.com" },
+]
+dependencies = [
+    "pytest==8.4.1",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.version]
+path = "django_consistency_enforcer_test_driver/version.py"
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "/django_consistency_enforcer_test_driver",
+]

@@ -1,0 +1,81 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "django-consistency-enforcer"
+dynamic = ["version"]
+description = "Logic to use in tests to enforce internal consistency within Django concepts"
+readme = "README.rst"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [
+  { name = "Stephen Moore", email = "stephen@delfick.com" },
+]
+maintainers = [
+  { name = "Stephen Moore", email = "stephen@delfick.com" },
+]
+
+classifiers = [
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Typing :: Typed",
+]
+
+requires-python = ">=3.12"
+
+[project.urls]
+repository = "https://github.com/kraken-tech/django-consistency-enforcer"
+changelog = "https://django-consistency-enforcer.readthedocs.io/api/changelog.html"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.version]
+path = "django_consistency_enforcer/version.py"
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "/django_consistency_enforcer",
+]
+
+[tool.uv.sources]
+tools = { workspace = true }
+djangoexample = { workspace = true }
+django_consistency_enforcer_test_driver = { workspace = true }
+
+[tool.uv.workspace]
+members = ["tools", "example", "scripts/test_helpers"]
+
+[dependency-groups]
+dev = [
+    "tools",
+    "djangoexample",
+    "django_consistency_enforcer_test_driver",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 99
+extend-exclude = [
+    ".DS_Store",
+    ".pytest_cache",
+    "tools/.python",
+    "tools/deps",
+    "__pycache__",
+]
+
+[tool.ruff.lint]
+select = [
+    "B008",  # mutable objects as function argument defaults
+    "B015",  # flake8-bugbear (useless-comparison)
+    "I",  # isort
+    "T20",  # flake8-print
+    "UP",  # pyupgrade
+    "RUF",
+    "F",
+]
