@@ -33,7 +33,7 @@ dependencies = [
 
 [project.urls]
 repository = "https://github.com/kraken-tech/django-consistency-enforcer"
-changelog = "https://django-consistency-enforcer.readthedocs.io/api/changelog.html"
+changelog = "https://django-consistency-enforcer.readthedocs.io/en/latest/api/changelog.html"
 
 [tool.hatch.metadata]
 allow-direct-references = true
