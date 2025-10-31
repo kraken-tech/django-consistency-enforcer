@@ -27,6 +27,9 @@ classifiers = [
 ]
 
 requires-python = ">=3.12"
+dependencies = [
+   "attrs>=25.0.0",
+]
 
 [project.urls]
 repository = "https://github.com/kraken-tech/django-consistency-enforcer"
