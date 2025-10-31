@@ -38,4 +38,5 @@ For maintainers, releasing a new version is a case of these two steps:
    ``django_consistency_enforce/version.py`` and merge those changes into the
    ``main`` branch
 
-2. Run the "Release Package" github action.
+2. Run the `Release Packages <https://github.com/kraken-tech/django-consistency-enforcer/actions/workflows/release.yml>`
+   Github action.
