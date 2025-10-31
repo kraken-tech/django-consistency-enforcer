@@ -18,6 +18,12 @@ class Where:
 
     @classmethod
     def empty(cls) -> Self:
+        """
+        Used to construct an instance where all the values are empty.
+
+        Useful in tests especially to create an instance of this class where we
+        don't need to worry about the details it's actually representing.
+        """
         return cls(name="", regex="", module="", namespace="")
 
     @classmethod
@@ -29,6 +35,10 @@ class Where:
         name: str | None = None,
         namespace: str | None = None,
     ) -> Self:
+        """
+        Used to construct an instance taking into account the type of the
+        urlconf_module on a url resolver.
+        """
         if isinstance(resolver.urlconf_module, types.ModuleType):
             return cls(
                 module=resolver.urlconf_module.__file__ or "",
@@ -40,6 +50,12 @@ class Where:
             return cls(module="", name=name or "", namespace=namespace or "", regex=regex)
 
     def display(self, *, indent: str = "  ", display_regex: bool = True) -> str:
+        """
+        Return a string representing this location.
+
+        Essentially a string with each property on it's own line indented the
+        amount as specified.
+        """
         parts: list[str] = []
         if self.module:
             parts.append(f"{indent}module = {self.module}")

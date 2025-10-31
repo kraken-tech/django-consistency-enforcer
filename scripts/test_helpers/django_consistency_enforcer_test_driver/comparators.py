@@ -6,6 +6,10 @@ from django_consistency_enforcer import urls as enforcer
 
 @attrs.mutable
 class IsConverter:
+    """
+    A comparator that ensures some object is a django converter
+    """
+
     expect: type
     got: object = attrs.field(init=False)
 
@@ -21,6 +25,11 @@ class IsConverter:
 
 
 def CapturedInt() -> enforcer.CapturedArg:
+    """
+    Return a CapturedArg that can be used to compare against a captured arg
+    where we don't care the specifics of the converter and only that the annotation
+    is an int.
+    """
     return enforcer.CapturedArg(
         converter=IsConverter(
             converters.IntConverter  # type: ignore[arg-type]
@@ -30,6 +39,11 @@ def CapturedInt() -> enforcer.CapturedArg:
 
 
 def CapturedString() -> enforcer.CapturedArg:
+    """
+    Return a CapturedArg that can be used to compare against a captured arg
+    where we don't care the specifics of the converter and only that the annotation
+    is a str.
+    """
     return enforcer.CapturedArg(
         converter=IsConverter(
             converters.StringConverter  # type: ignore[arg-type]

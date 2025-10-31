@@ -11,9 +11,17 @@ from . import _display, _errors, _functions, _view_patterns
 
 
 class PatternScenario(Generic[_view_patterns.T_Pattern], abc.ABC):  # noqa: UP046
+    """
+    Represents a check that is run on a specific pattern.
+    """
+
     @property
     @abc.abstractmethod
-    def exit_early(self) -> bool: ...
+    def exit_early(self) -> bool:
+        """
+        Used to indicate that if this scenario fails, no other pattern scenarios
+        should be run.
+        """
 
     @abc.abstractmethod
     def run(
@@ -22,13 +30,24 @@ class PatternScenario(Generic[_view_patterns.T_Pattern], abc.ABC):  # noqa: UP04
         errors: _errors.ErrorContainer,
         auth_user_model: type,
         pattern: _view_patterns.T_Pattern,
-    ) -> None: ...
+    ) -> None:
+        """
+        This is where the logic for the check needs to go.
+        """
 
 
 class FunctionScenario(Generic[_view_patterns.T_Pattern], abc.ABC):  # noqa: UP046
+    """
+    Represents a check that is run on a specific Django view.
+    """
+
     @property
     @abc.abstractmethod
-    def exit_early(self) -> bool: ...
+    def exit_early(self) -> bool:
+        """
+        Used to indicate that if this scenario fails, no other pattern scenarios
+        should be run.
+        """
 
     @abc.abstractmethod
     def run(
@@ -38,13 +57,23 @@ class FunctionScenario(Generic[_view_patterns.T_Pattern], abc.ABC):  # noqa: UP0
         auth_user_model: type,
         pattern: _view_patterns.T_Pattern,
         function: _functions.DispatchFunction,
-    ) -> None: ...
+    ) -> None:
+        """
+        This is where the logic for the check needs to go.
+        """
 
 
 @attrs.frozen
 class CheckPositionalArgsAreCorrectFunctionScenario(
     FunctionScenario[_view_patterns.T_Pattern], abc.ABC
 ):
+    """
+    This is a scenario that checks that the positional arguments on a view are
+    correct.
+
+    This view needs to be subclass'd with an implementation for `is_mistyped`.
+    """
+
     disallow_var_args: bool = True
     enforce_keyword_args: bool = True
     exit_early: bool = False
@@ -57,6 +86,19 @@ class CheckPositionalArgsAreCorrectFunctionScenario(
         pattern: _view_patterns.T_Pattern,
         function: _functions.DispatchFunction,
     ) -> None:
+        """
+        This check looks at all the function_args and:
+
+        * Skips the `self` argument
+        * Matches the positional arguments found on the view against the
+          required arguments defined by `function`
+
+          - Complains about `*args` if `self.disallow_var_args`
+          - Complains about a missing `*` after required positional args if
+            `self.enforce_keyword_args`
+          - Calls into `is_mistyped` to get an error if the annotation on the
+            argument is neither `Any` or the expected annotation for that argument.
+        """
         incorrect: list[_errors.MismatchedRequiredArgs.Incorrect] = []
         positional = list(function.positional)
 
@@ -115,6 +157,9 @@ class CheckPositionalArgsAreCorrectFunctionScenario(
     def add_error(
         self, *, errors: _errors.ErrorContainer, error: _errors.MismatchedRequiredArgs
     ) -> None:
+        """
+        Add an error to come out of the scenario.
+        """
         errors.add(error)
 
     @abc.abstractmethod
@@ -127,13 +172,24 @@ class CheckPositionalArgsAreCorrectFunctionScenario(
         auth_user_model: type,
         name: str,
         position: int,
-    ) -> _errors.MismatchedRequiredArgs.Incorrect | None: ...
+    ) -> _errors.MismatchedRequiredArgs.Incorrect | None:
+        """
+        Used to determine what error is appropriate when the annotation doesn't
+        match for any of the required positional arguments.
+
+        This is abstract cause deciding that is likely project specific.
+        """
 
 
 @attrs.frozen
 class CheckRequiredArgsMatchUrlPatternFunctionScenario(
-    FunctionScenario[_view_patterns.T_ViewPattern], abc.ABC
+    FunctionScenario[_view_patterns.T_ViewPattern]
 ):
+    """
+    Checks that the arguments that are required by a function are found in
+    the pattern that routes to the view.
+    """
+
     exit_early: bool = False
 
     def run(
@@ -144,6 +200,10 @@ class CheckRequiredArgsMatchUrlPatternFunctionScenario(
         pattern: _view_patterns.T_ViewPattern,
         function: _functions.DispatchFunction,
     ) -> None:
+        """
+        Discover the arguments that must be passed into the function and complain
+        about any that are missing from the pattern.
+        """
         missing: set[str] = set()
 
         positional = list(function.positional)
@@ -179,11 +239,18 @@ class CheckRequiredArgsMatchUrlPatternFunctionScenario(
         errors: _errors.ErrorContainer,
         error: _errors.RequiredArgOnViewNotAlwaysRequiredByPattern,
     ) -> None:
+        """
+        Add an error to come out of the scenario.
+        """
         errors.add(error)
 
 
 @attrs.frozen
 class CheckAcceptsArgsFunctionScenario(FunctionScenario[_view_patterns.T_ViewPattern]):
+    """
+    Checks that all the arguments in the pattern are accepted by the function.
+    """
+
     exit_early: bool = False
 
     def run(
@@ -194,6 +261,13 @@ class CheckAcceptsArgsFunctionScenario(FunctionScenario[_view_patterns.T_ViewPat
         pattern: _view_patterns.T_ViewPattern,
         function: _functions.DispatchFunction,
     ) -> None:
+        """
+        If the function has a `**kwargs: object` or `**kwargs: Any` then
+        no errors because the function takes in anything.
+
+        Otherwise we gather the keyword arguments on the function and match them
+        to the captured args found on the pattern.
+        """
         if function.allows_arbitrary:
             return
 
@@ -232,11 +306,18 @@ class CheckAcceptsArgsFunctionScenario(FunctionScenario[_view_patterns.T_ViewPat
     def add_error(
         self, *, errors: _errors.ErrorContainer, error: _errors.ViewDoesNotAcceptCapturedArg
     ) -> None:
+        """
+        Add an error to come out of the scenario.
+        """
         errors.add(error)
 
 
 @attrs.frozen
 class CheckViewClassRequestAnnotationScenario(PatternScenario[_view_patterns.T_ViewPattern]):
+    """
+    Check that the view class has an annotation for `request` that is correct.
+    """
+
     acceptable_annotations: Sequence[object]
     acceptable_request_annotation_containers: Sequence[object]
     error_class: type[_errors.InvalidRequestAnnotation]
@@ -250,6 +331,13 @@ class CheckViewClassRequestAnnotationScenario(PatternScenario[_view_patterns.T_V
         auth_user_model: type,
         pattern: _view_patterns.T_ViewPattern,
     ) -> None:
+        """
+        If the pattern is not a view class method or there is no request annotation
+        on the class then there is nothing to check and we exit.
+
+        Otherwise we defer to `annotation_is_valid` to determine if the annotation
+        is correct.
+        """
         if pattern.view_class is None:
             return
 
@@ -282,6 +370,9 @@ class CheckViewClassRequestAnnotationScenario(PatternScenario[_view_patterns.T_V
     def add_error(
         self, *, errors: _errors.ErrorContainer, error: _errors.InvalidRequestAnnotation
     ) -> None:
+        """
+        Add an error to come out of the scenario.
+        """
         errors.add(error)
 
     def annotation_is_valid(
@@ -292,6 +383,11 @@ class CheckViewClassRequestAnnotationScenario(PatternScenario[_view_patterns.T_V
         annotation: object,
         pattern: _view_patterns.T_ViewPattern,
     ) -> bool:
+        """
+        Return whether the annotation found for `request` is valid.
+
+        This can be subclass'd when a project has it's own specific rules.
+        """
         origin = typing.get_origin(annotation)
         args = typing.get_args(annotation)
 
@@ -307,6 +403,11 @@ class CheckViewClassRequestAnnotationScenario(PatternScenario[_view_patterns.T_V
 
 @attrs.frozen
 class CheckHasCorrectAnnotationsFunctionScenario(FunctionScenario[_view_patterns.T_ViewPattern]):
+    """
+    Check that the annotations on the function args match the types provided by
+    the converters used in the captured groups of the pattern.
+    """
+
     exit_early: bool = False
 
     def run(
@@ -317,6 +418,10 @@ class CheckHasCorrectAnnotationsFunctionScenario(FunctionScenario[_view_patterns
         pattern: _view_patterns.T_ViewPattern,
         function: _functions.DispatchFunction,
     ) -> None:
+        """
+        This matches the annotations on the function args to the annotations on
+        the captured args on the pattern.
+        """
         args_by_name = {function_arg.name: function_arg for function_arg in function.function_args}
 
         incorrect: list[tuple[str, object, object]] = []
@@ -341,11 +446,18 @@ class CheckHasCorrectAnnotationsFunctionScenario(FunctionScenario[_view_patterns
     def add_error(
         self, *, errors: _errors.ErrorContainer, error: _errors.InvalidArgAnnotations
     ) -> None:
+        """
+        Add an error to come out of the scenario.
+        """
         errors.add(error)
 
 
 @attrs.frozen
 class CheckKwargsMustBeAnnotatedFunctionScenario(FunctionScenario[_view_patterns.T_Pattern]):
+    """
+    Check that a `**kwargs` on the django view is annotated correctly.
+    """
+
     allows_object: bool = False
     allows_any: bool = False
     exit_early: bool = False
@@ -358,6 +470,15 @@ class CheckKwargsMustBeAnnotatedFunctionScenario(FunctionScenario[_view_patterns
         pattern: _view_patterns.T_Pattern,
         function: _functions.DispatchFunction,
     ) -> None:
+        """
+        Ensure that the annotation is correct
+
+        - Annotation of `object` is correct only if `self.allows_object`
+        - Annotation of `Any` is correct only if `self.allows_any`
+        - Otherwise complain because the only valid annotation otherwise is
+          a `TypedDict` and those are already unpacked when we create the function
+          objects.
+        """
         for arg in function.function_args:
             if not arg.is_variable_keywords:
                 continue
@@ -381,4 +502,7 @@ class CheckKwargsMustBeAnnotatedFunctionScenario(FunctionScenario[_view_patterns
     def add_error(
         self, *, errors: _errors.ErrorContainer, error: _errors.KwargsMustBeAnnotated
     ) -> None:
+        """
+        Add an error to come out of the scenario.
+        """
         errors.add(error)
