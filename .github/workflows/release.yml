@@ -1,0 +1,46 @@
+on:
+  - workflow_dispatch
+
+name: Release Packages
+
+jobs:
+  build:
+    name: Create the package
+    runs-on: ubuntu-latest
+    environment: github_release
+    permissions:
+      # for trusted publishing
+      id-token: write
+      # for creating the release
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.13"
+
+      - id: build
+        run: ./tools/uv build
+
+      - id: version
+        run: |
+          version=$(python -c "import runpy; print(runpy.run_path('django_consistency_enforcer/version.py')['VERSION'])")
+          versiondash=$(python -c "import runpy; print(runpy.run_path('django_consistency_enforcer/version.py')['VERSION'].replace('.', '-'))")
+
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "versiondash=$versiondash" >> $GITHUB_OUTPUT
+
+      - id: create-release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: django-consistency-enforcer ${{ steps.version.outputs.version }}
+          body: "https://github.com/kraken-tech/django-consistency-enforcer#release-${{ steps.version.outputs.versiondash }}"
+          tag_name: "release-${{ steps.version.outputs.version }}"
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
+          files: "dist/*"
+
+      - name: publish
+        uses: pypa/gh-action-pypi-publish@release/v1

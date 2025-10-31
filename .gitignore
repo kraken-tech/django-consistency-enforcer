@@ -7,3 +7,4 @@ __pycache__/
 .tox/
 dist/
 pip-wheel-metadata/
+.mypy_django_scratch
