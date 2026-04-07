@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import sys
 import types
 import typing
 from collections.abc import Callable, Mapping, Sequence
@@ -177,9 +178,14 @@ class Function:
                 globalns = inspect.getmodule(typed_dict).__dict__
                 for name, typ in inspect.get_annotations(typed_dict).items():
                     if isinstance(typ, ForwardRef):
-                        typ = typ._evaluate(
-                            globalns, localns, type_params=(), recursive_guard=frozenset()
-                        )
+                        if sys.version_info >= (3, 14):
+                            typ = typing.evaluate_forward_ref(
+                                typ, globals=globalns, locals=localns
+                            )
+                        else:
+                            typ = typ._evaluate(
+                                globalns, localns, type_params=(), recursive_guard=frozenset()
+                            )
 
                     required = True
                     origin = typing.get_origin(typ)
