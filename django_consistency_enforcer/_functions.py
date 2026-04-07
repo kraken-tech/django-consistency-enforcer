@@ -174,6 +174,7 @@ class Function:
 
             if typing.get_origin(annotation) == Unpack:
                 typed_dict = typing.get_args(annotation)[0]
+                globalns = inspect.getmodule(typed_dict).__dict__
                 for name, typ in inspect.get_annotations(typed_dict).items():
                     if isinstance(typ, ForwardRef):
                         typ = typ._evaluate(
