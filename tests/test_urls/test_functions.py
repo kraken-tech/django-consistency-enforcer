@@ -3,6 +3,9 @@ from typing import Any
 import django_consistency_enforcer_test_driver as test_helpers
 from django import http
 from django.views import generic
+from django_consistency_enforcer_test_driver.imported_typed_dict_fixture import (
+    view as imported_typed_dict_views,
+)
 
 from django_consistency_enforcer import urls as enforcer
 
@@ -73,6 +76,46 @@ class TestSignaturesForStandaloneFunctions:
                             keyword_only=True,
                             required=True,
                             annotation=int | str,
+                        ),
+                    ],
+                    allows_arbitrary=False,
+                ),
+                positional=test_helpers.views.generic_view_positional,
+            )
+        ]
+
+    def test_it_works_when_typed_dict_is_strings(self) -> None:
+        where = enforcer.Where.empty()
+        functions = list(
+            test_helpers.patterns.from_raw_pattern(
+                enforcer.RawPattern.from_parts(
+                    [], where=where, callback=imported_typed_dict_views.my_view
+                )
+            ).relevant_functions()
+        )
+        assert functions == [
+            enforcer.DispatchFunction(
+                enforcer.Function(
+                    name="my_view",
+                    module=imported_typed_dict_views.__file__,
+                    function_args=[
+                        enforcer.FunctionArg(
+                            name="request",
+                            keyword_only=False,
+                            required=True,
+                            annotation=http.HttpRequest,
+                        ),
+                        enforcer.FunctionArg(
+                            name="one",
+                            keyword_only=True,
+                            required=False,
+                            annotation=str,
+                        ),
+                        enforcer.FunctionArg(
+                            name="two",
+                            keyword_only=True,
+                            required=True,
+                            annotation=int,
                         ),
                     ],
                     allows_arbitrary=False,
