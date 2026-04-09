@@ -18,7 +18,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - id: build
         run: ./tools/uv build
